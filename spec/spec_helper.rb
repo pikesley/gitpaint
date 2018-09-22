@@ -1,5 +1,7 @@
 require 'bundler/setup'
 require 'gitpaint'
+require 'timecop'
+
 require_relative 'support/vcr'
 
 RSpec.configure do |config|

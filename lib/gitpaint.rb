@@ -1,3 +1,5 @@
+require 'date'
+
 require 'httparty'
 require 'nokogiri'
 
@@ -11,5 +13,10 @@ module Gitpaint
     doc = Nokogiri::HTML body
     data = doc.xpath '//rect/@data-count'
     data.map { |c| c.value.to_i }.max
+  end
+
+  def self.sunday_before_a_year_ago
+    year_ago = (Date.today - 365)
+    year_ago - year_ago.wday
   end
 end
