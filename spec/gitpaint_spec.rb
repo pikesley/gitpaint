@@ -6,7 +6,8 @@ RSpec.describe Gitpaint do
   it 'finds the Sunday before 1 year ago' do
     {
       '2018-09-22' => '2017-09-17',
-      '2017-01-01' => '2015-12-27'
+      '2018-09-23' => '2017-09-24',
+      '2017-01-01' => '2016-01-03'
     }.each_pair do |now, sunday|
       Timecop.freeze now do
         expect(Gitpaint.sunday_before_a_year_ago.iso8601).to eq sunday
