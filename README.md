@@ -5,7 +5,7 @@
 
 # Gitpaint
 
-Slightly clunky wrapper around the Github contributions graph
+Draw a grid of data onto the Github contributions graph
 
 ## Usage
 
@@ -15,6 +15,12 @@ irb(main):001:0> require 'gitpaint'
 irb(main):002:0> data = [[1] * 52, [1] + [0] * 50 + [1], [1] + [0] * 50 + [1], [1] + [0] * 50 + [1], [1] + [0] * 50 + [1], [1] + [0] * 50 + [1], [1] * 52]
 => [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
 irb(main):003:0> Gitpaint.paint data, '/path/to/existing/repo'
+=> nil
+irb(main):004:0>
 ```
 
-That repo should already exist and have an `origin` remote on Github. The repo should be considered disposable, because Gitpaint will nuke it and start from scratch every time 
+### Notes
+
+* the repo should already exist and have an `origin` remote on Github.
+* the repo should be considered disposable, because Gitpaint will nuke it and start from scratch every time (it's just easier that way)
+* the numbers in your data will be multiplied by `SCALE_FACTOR` (currently set to 8), so `[0, 1, 2]` becomes 0, 8, and 16 commits at each of those positions (larger numbers draw darker squares)
