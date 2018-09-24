@@ -4,11 +4,19 @@ require 'fileutils'
 require 'httparty'
 require 'nokogiri'
 require 'git'
+require 'dotenv'
+require 'octokit'
 
 require 'gitpaint/version'
 
+Dotenv.load '~/.gitpaint/.env'
+
 module Gitpaint
-  SCALE_FACTOR = 8
+  SCALE_FACTOR = 16
+
+  def self.github_client
+    Octokit::Client.new access_token: ENV['TOKEN']
+  end
 
   def self.max_finder account
     url = 'https://github.com/users/contributions' % account
@@ -25,10 +33,6 @@ module Gitpaint
       return Date.today - 364
     end
     year_ago - year_ago.wday
-  end
-
-  def self.github_user repo
-    Git.init(repo).config['user.name']
   end
 
   def self.data_to_dates data
@@ -69,37 +73,49 @@ module Gitpaint
     ]
   end
 
-  def self.paint data, repo, nuke: true, push: true
-    nuke repo if nuke
+  def self.paint data, repo, message: 'The commit is a lie'
+    nuke repo
+    remote = create repo
+    remote.sub! 'com', 'com-towers-of-hanoi'
 
     unless data.flatten.uniq.delete_if { |i| i == 0 } == []
-      Dir.chdir repo
+      g = Git.init "/tmp/#{repo}"
+      g.add_remote 'origin', remote
+      g.config 'user.name', ENV['USERNAME']
+      g.config 'user.email', ENV['EMAIL']
+
+      FileUtils.chdir "/tmp/#{repo}"
       data = scale_grid data
       dates = data_to_dates data
       dates.each_pair do |date, count|
         count.times do
-          s = Gitpaint.make_commit date
+          s = Gitpaint.make_commit date, message: message
           `#{s}`
         end
       end
     end
 
-    push_commits repo if push
+    push_commits repo
   end
 
   def self.nuke repo
-    g = Git.init repo
-    remote = g.remote.url
-    FileUtils.rm_rf "#{g.dir.path}/.git"
-    g = Git.init repo
-    g.add_remote 'origin', remote
-    Dir.chdir repo
-    s = make_commit '1970-01-01', message: 'Ancient commit'
-    `#{s}`
+    FileUtils.rm_rf "/tmp/#{repo}"
+
+    begin
+      victim = github_client.repos.select { |r| r.name == repo }.first.id
+      github_client.delete_repository victim
+    rescue NoMethodError => e
+      # do something here
+    end
+  end
+
+  def self.create repo
+    r = github_client.create_repository repo
+    r.ssh_url
   end
 
   def self.push_commits repo
-    g = Git.init repo
-    g.push 'origin', 'master', f: true
+    g = Git.open "/tmp/#{repo}"
+    g.push 'origin', 'master'
   end
 end
