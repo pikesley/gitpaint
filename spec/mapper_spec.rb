@@ -18,8 +18,8 @@ module Gitpaint
       it 'scales grid values' do
         data = [[0, 1, 2, 1, 4, 5], [0, 1]]
         expect(Gitpaint.scale_grid data).to eq [
-          [0, 8, 16, 8, 32, 40], 
-          [0, 8]
+          [0, 16, 32, 16, 64, 80],
+          [0, 16]
         ]
       end
     end

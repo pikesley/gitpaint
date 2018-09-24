@@ -15,7 +15,7 @@ module Gitpaint
     it 'creates commits', :vcr do
       data = [[1, 0, 1], [], [0, 1, 0]]
       Timecop.freeze '2018-01-15' do
-        Gitpaint.paint data, REPO, nuke: false, push: false
+        Gitpaint.paint data, REPO
         log = @g.log
         expect(log.map { |l| l.author.date.iso8601 }).to eq [
           '2017-01-29T12:00:00+00:00',
