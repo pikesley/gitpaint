@@ -3,8 +3,6 @@ require 'gitpaint'
 require 'timecop'
 require 'coveralls'
 
-require_relative 'support/vcr'
-
 Coveralls.wear!
 
 RSpec.configure do |config|

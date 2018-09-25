@@ -1,30 +1,27 @@
 require 'date'
 require 'fileutils'
+require 'singleton'
 
 require 'httparty'
 require 'nokogiri'
 require 'git'
-require 'dotenv'
 require 'octokit'
 
 require 'gitpaint/version'
-
-Dotenv.load '~/.gitpaint/.env'
+require 'gitpaint/github_client'
+require 'gitpaint/config'
 
 module Gitpaint
-  SCALE_FACTOR = 16
-
   def self.github_client
-    Octokit::Client.new access_token: ENV['TOKEN']
+    GithubClient.instance.client
   end
 
-  def self.max_finder account
-    url = 'https://github.com/users/contributions' % account
-    response = HTTParty.get 'https://github.com/users/towers-of-hanoi/contributions'
-    body = response.body
-    doc = Nokogiri::HTML body
-    data = doc.xpath '//rect/@data-count'
-    data.map { |c| c.value.to_i }.max
+  def self.configure
+    yield Config.instance.config
+  end
+
+  def self.config
+    Config.instance.config
   end
 
   def self.sunday_before_a_year_ago
@@ -61,46 +58,63 @@ module Gitpaint
     grid
   end
 
-  def self.scale_grid grid
-    grid.map { |row| row.map { |v| v * SCALE_FACTOR } }
+  def self.scale_commits grid
+    grid.map { |row| row.map { |v| v * config.scale_factor } }
   end
 
   def self.make_commit date, message: 'The commit is a lie'
-    'GIT_AUTHOR_DATE=%sT12:00:00 GIT_COMMITTER_DATE=%sT12:00:00 git commit --allow-empty -m "%s" > /dev/null' % [
-      date,
-      date,
+    pieces = []
+
+    pieces.push "GIT_AUTHOR_NAME=%s" % config.username
+    pieces.push "GIT_AUTHOR_EMAIL=%s" % config.email
+    pieces.push "GIT_AUTHOR_DATE=%sT12:00:00" % date
+    pieces.push "GIT_COMMITTER_NAME=%s" % config.username
+    pieces.push "GIT_COMMITTER_EMAIL=%s" % config.email
+    pieces.push "GIT_COMMITTER_DATE=%sT12:00:00" % date
+
+    "%s git commit --allow-empty -m '%s' > /dev/null" % [
+      pieces.join(' '),
       message
     ]
   end
 
-  def self.paint data, repo, message: 'The commit is a lie'
+  def self.paint data, repo, message: config.commit_message 
+    clean_local repo
     nuke repo
-    remote = create repo
-    remote.sub! 'com', 'com-towers-of-hanoi'
 
     unless data.flatten.uniq.delete_if { |i| i == 0 } == []
+      remote = create repo
+      custom_ssh_script
+      Git.configure do |config|
+        config.git_ssh = '/tmp/custom.sh'
+      end
+
       g = Git.init "/tmp/#{repo}"
       g.add_remote 'origin', remote
-      g.config 'user.name', ENV['USERNAME']
-      g.config 'user.email', ENV['EMAIL']
 
-      FileUtils.chdir "/tmp/#{repo}"
-      data = scale_grid data
-      dates = data_to_dates data
-      dates.each_pair do |date, count|
-        count.times do
-          s = Gitpaint.make_commit date, message: message
-          `#{s}`
-        end
+      make_commits data, repo, message: message
+
+      push repo
+    end
+  end
+
+  def self.make_commits data, repo, message:
+    FileUtils.chdir "/tmp/#{repo}"
+    data = scale_commits data
+    dates = data_to_dates data
+    dates.each_pair do |date, count|
+      count.times do
+        s = Gitpaint.make_commit date, message: message
+        `#{s}`
       end
     end
+  end
 
-    push_commits repo
+  def self.clean_local repo
+    FileUtils.rm_rf "/tmp/#{repo}"
   end
 
   def self.nuke repo
-    FileUtils.rm_rf "/tmp/#{repo}"
-
     begin
       victim = github_client.repos.select { |r| r.name == repo }.first.id
       github_client.delete_repository victim
@@ -109,12 +123,20 @@ module Gitpaint
     end
   end
 
+  def self.custom_ssh_script dir = '/tmp'
+    File.open "#{dir}/custom.sh", 'w' do |f|
+      f.write "#!/bin/sh\n"
+      f.write 'ssh -i "%s" "$@"' % config.ssh_key
+    end
+    FileUtils.chmod '+x', "#{dir}/custom.sh"
+  end
+
   def self.create repo
     r = github_client.create_repository repo
     r.ssh_url
   end
 
-  def self.push_commits repo
+  def self.push repo
     g = Git.open "/tmp/#{repo}"
     g.push 'origin', 'master'
   end
