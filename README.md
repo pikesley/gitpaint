@@ -1,43 +1,58 @@
+[![Build Status](http://img.shields.io/travis/pikesley/gitpaint.svg?style=flat-square)](https://travis-ci.org/pikesley/gitpaint)
+[![Coverage Status](http://img.shields.io/coveralls/pikesley/gitpaint.svg?style=flat-square)](https://coveralls.io/r/pikesley/gitpaint)
+[![Gem Version](http://img.shields.io/gem/v/gitpaint.svg?style=flat-square)](https://rubygems.org/gems/gitpaint)
+[![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://pikesley.mit-license.org)
+
 # Gitpaint
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/gitpaint`. To experiment with that code, run `bin/console` for an interactive prompt.
+Draw a grid of data onto the Github contributions graph
 
-TODO: Delete this and the text above, and describe your gem
+# Installation
 
-## Installation
+    git clone https://github.com/pikesley/gitpaint
+    cd gitpaint
+    bundle
+    bundle exec rake
+    bundle exec rake install
 
-Add this line to your application's Gemfile:
+# Configuration
 
-```ruby
-gem 'gitpaint'
-```
+    Gitpaint.configure do |config|
+      config.username = github_user
+      config.email =    github_email
+      config.repo =     github_repo
+      config.token =    github_api_token
+      config.ssh_key =  /path/to/ssh_key
+    end
 
-And then execute:
+## About the configuration
 
-    $ bundle
+* Github only credits you with a contribution if the commit (apparently) came from the username and email associated with your account, so we need those
+* We also need a (disposable) repo to work with: this will be created locally at `/tmp/#{repo}` and remotely at `https://github.com/#{github_user}/#{repo}` (and it will be mercilessly deleted from both places between runs)
+* We need a Github [personal access token](https://github.com/settings/tokens) that has the `repo` privileges and, crucially, the separate `delete repo` privilege
+* And we need the path to an ssh key that can commit to the `#{github_user}` account
 
-Or install it yourself as:
+# Painting
 
-    $ gem install gitpaint
+    data = [
+      [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3],
+      [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3],
+      [2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 1, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3],
+      [2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 3, 3, 3, 2, 2, 3, 2, 2, 2, 2, 2, 2],
+      [2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 2, 3, 2, 2, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2, 1, 1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 3, 2, 2, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 2, 2, 1, 0, 1, 1, 1, 0, 0, 1, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 1, 1],
+      [2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ]
+    Gitpaint.paint data
 
-## Usage
+## Rendering from a PNG
 
-TODO: Write usage instructions here
+There's some slightly clunky code that will take a 52*7 greyscale PNG image and turn it into data suitable for Gitpaint. Use it like
 
-## Development
+    pngr = Gitpaint::PNGRenderer.new 'image.png'
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+or
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+    bundle exec rake image:decompose[image.png]
 
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/gitpaint. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
-
-## License
-
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Gitpaint project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/gitpaint/blob/master/CODE_OF_CONDUCT.md).
+the pass that to `Gitpaint.paint`
