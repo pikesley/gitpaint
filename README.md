@@ -7,7 +7,7 @@
 
 Draw a grid of data onto the Github contributions graph
 
-# Installation
+## Installation
 
     git clone https://github.com/pikesley/gitpaint
     cd gitpaint
@@ -15,7 +15,7 @@ Draw a grid of data onto the Github contributions graph
     bundle exec rake
     bundle exec rake install
 
-# Configuration
+## Configuration
 
     Gitpaint.configure do |config|
       config.username = github_user
@@ -25,14 +25,14 @@ Draw a grid of data onto the Github contributions graph
       config.ssh_key =  /path/to/ssh_key
     end
 
-## About the configuration
+### About the configuration
 
 * Github only credits you with a contribution if the commit (apparently) came from the username and email associated with your account, so we need those
 * We also need a (disposable) repo to work with: this will be created locally at `/tmp/#{repo}` and remotely at `https://github.com/#{github_user}/#{repo}` (and it will be mercilessly deleted from both places between runs)
 * We need a Github [personal access token](https://github.com/settings/tokens) that has the `repo` privileges and, crucially, the separate `delete repo` privilege
 * And we need the path to an ssh key that can commit to the `#{github_user}` account
 
-# Painting
+## Painting
 
     data = [
       [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3],
@@ -45,7 +45,7 @@ Draw a grid of data onto the Github contributions graph
     ]
     Gitpaint.paint data
 
-## Rendering from a PNG
+### Rendering from a PNG
 
 There's some slightly clunky code that will take a 52*7 greyscale PNG image and turn it into data suitable for Gitpaint. Use it like
 
